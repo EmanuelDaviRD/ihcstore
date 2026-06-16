@@ -73,7 +73,7 @@ app.get('/produtos', async (req, res) => {
 app.post('/produtos', authenticate, isAdmin, async (req, res) => {
   try {
     const { name, price, category, stock, image, description, badge } = req.body;
-    if (!name || price === undefined) return res.status(400).json({ error: 'Nome e preço são obrigatórios' });
+    if (!name || price === undefined || !category) return res.status(400).json({ error: 'Nome, preço e categoria são obrigatórios' });
 
     const id = 'p-' + Date.now();
     await upsertProduct(id, {

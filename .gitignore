@@ -1,5 +1,10 @@
+# Dependências
 node_modules/
-*.env
-database.json
-backend/uploads/*
-!backend/uploads/.gitkeep
+
+# Banco de Dados Local (SQLite)
+backend/data/*.db
+backend/data/*.db-journal
+
+# Outros
+.env
+backend/uploads/

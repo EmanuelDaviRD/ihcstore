@@ -98,16 +98,17 @@ module.exports = {
   listProducts: () => new Promise((r, e) => db.all('SELECT * FROM products ORDER BY sales DESC', (err, rows) => err ? e(err) : r(rows || []))),
   getProductById: (id) => new Promise((r, e) => db.get('SELECT * FROM products WHERE id = ?', [id], (err, row) => err ? e(err) : r(row))),
   upsertProduct: (id, data) => new Promise((r, e) => {
-    db.get('SELECT 1 FROM products WHERE id = ?', [id], (err, row) => {
+    db.get('SELECT * FROM products WHERE id = ?', [id], (err, row) => {
       if (err) return e(err);
       if (row) {
+        const merged = { ...row, ...data };
         db.run('UPDATE products SET name=?, price=?, category=?, stock=?, image=?, description=?, sales=?, badge=? WHERE id=?',
-          [data.name, data.price, data.category, data.stock, data.image, data.description, data.sales || 0, data.badge || '', id],
-          (err) => err ? e(err) : r({id, ...data}));
+          [merged.name, merged.price, merged.category, merged.stock, merged.image, merged.description, merged.sales, merged.badge, id],
+          (err) => err ? e(err) : r(merged));
       } else {
         db.run('INSERT INTO products VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))',
           [id, data.name, data.price, data.category, data.stock, data.image, data.description, data.sales || 0, data.badge || ''],
-          (err) => err ? e(err) : r({id, ...data}));
+          (err) => err ? e(err) : r({ id, ...data }));
       }
     });
   }),
