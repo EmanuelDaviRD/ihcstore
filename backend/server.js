@@ -332,12 +332,12 @@ app.post('/settings', authenticate, isAdmin, async (req, res) => {
 app.use(express.static(path.join(__dirname, 'frontend'), { fallthrough: true }));
 app.use('/uploads', (req, res) => res.status(404).json({ error: 'Arquivo não encontrado' }));
 
-app.use(['/produtos', '/pedidos', '/usuarios', '/settings', '/login', '/register'], (req, res) => {
-  res.status(404).json({ error: 'Rota de API não encontrada' });
-});
-
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+// 404 para rotas não encontradas (API ou frontend)
+app.use((req, res) => {
+  if (req.path.startsWith('/produtos') || req.path.startsWith('/pedidos') || req.path.startsWith('/usuarios') || req.path.startsWith('/settings') || req.path.startsWith('/login') || req.path.startsWith('/register')) {
+    return res.status(404).json({ error: 'Rota de API não encontrada' });
+  }
+  res.status(404).sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
 const start = async () => {
