@@ -639,6 +639,7 @@ function openStatusModal(orderId, currentStatus) {
                     <button class="btn btn-save" onclick="updateOrderStatus('${orderId}')"><i class="fas fa-save"></i> Salvar</button>
                     <button class="btn btn-cancel" onclick="closeStatusModal()"><i class="fas fa-times"></i> Cancelar</button>
                 </div>
+            </div>
         </div>
     `;
     document.body.appendChild(modal);

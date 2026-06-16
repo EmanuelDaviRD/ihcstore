@@ -99,15 +99,21 @@ module.exports = {
   getProductById: (id) => new Promise((r, e) => db.get('SELECT * FROM products WHERE id = ?', [id], (err, row) => err ? e(err) : r(row))),
   upsertProduct: (id, data) => new Promise((r, e) => {
     db.get('SELECT * FROM products WHERE id = ?', [id], (err, row) => {
-      if (err) return e(err);
+      if (err) {
+        console.error('Erro ao buscar produto:', err);
+        return e(err);
+      }
       if (row) {
         const merged = { ...row, ...data };
         db.run('UPDATE products SET name=?, price=?, category=?, stock=?, image=?, description=?, sales=?, badge=? WHERE id=?',
-          [merged.name, merged.price, merged.category, merged.stock, merged.image, merged.description, merged.sales, merged.badge, id],
+          [merged.name, parseFloat(merged.price), merged.category, parseInt(merged.stock), merged.image, merged.description, merged.sales, merged.badge, id],
           (err) => err ? e(err) : r(merged));
       } else {
+        if (!data.name || data.price === undefined) {
+          return e(new Error('Campos obrigatórios faltando para novo produto'));
+        }
         db.run('INSERT INTO products VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))',
-          [id, data.name, data.price, data.category, data.stock, data.image, data.description, data.sales || 0, data.badge || ''],
+          [id, data.name, parseFloat(data.price), data.category, parseInt(data.stock || 0), data.image, data.description, data.sales || 0, data.badge || ''],
           (err) => err ? e(err) : r({ id, ...data }));
       }
     });
