@@ -105,16 +105,20 @@ module.exports = {
       }
       if (row) {
         const merged = { ...row, ...data };
-        db.run('UPDATE products SET name=?, price=?, category=?, stock=?, image=?, description=?, sales=?, badge=? WHERE id=?',
-          [merged.name, parseFloat(merged.price), merged.category, parseInt(merged.stock), merged.image, merged.description, merged.sales, merged.badge, id],
-          (err) => err ? e(err) : r(merged));
+        const stmt = db.prepare('UPDATE products SET name=?, price=?, category=?, stock=?, image=?, description=?, sales=?, badge=? WHERE id=?');
+        stmt.run(
+          [merged.name, parseFloat(merged.price) || 0, merged.category, parseInt(merged.stock) || 0, merged.image, merged.description, merged.sales || 0, merged.badge || '', id],
+          function(err) { err ? e(err) : r(merged); }
+        );
       } else {
         if (!data.name || data.price === undefined) {
           return e(new Error('Campos obrigatórios faltando para novo produto'));
         }
-        db.run('INSERT INTO products VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))',
-          [id, data.name, parseFloat(data.price), data.category, parseInt(data.stock || 0), data.image, data.description, data.sales || 0, data.badge || ''],
-          (err) => err ? e(err) : r({ id, ...data }));
+        const stmt = db.prepare('INSERT INTO products (id, name, price, category, stock, image, description, sales, badge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        stmt.run(
+          [id, data.name, parseFloat(data.price) || 0, data.category, parseInt(data.stock) || 0, data.image, data.description, data.sales || 0, data.badge || ''],
+          function(err) { err ? e(err) : r({ id, ...data }); }
+        );
       }
     });
   }),

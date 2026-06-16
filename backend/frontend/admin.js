@@ -386,11 +386,11 @@ function previewImage() {
 
 async function saveProduct(id) {
     const name = document.getElementById("prodName").value;
-    const price = parseFloat(document.getElementById("prodPrice").value);
+    const price = parseFloat(document.getElementById("prodPrice").value) || 0;
     const category = document.getElementById("prodCategory").value;
-    const stock = parseInt(document.getElementById("prodStock").value) || 0;
+    const stock = parseInt(document.getElementById("prodStock").value, 10) || 0;
     const description = document.getElementById("prodDesc").value;
-const image = document.getElementById("imagemURL").value;
+    const image = document.getElementById("imagemURL").value;
     const badge = document.getElementById("prodBadge").value;
 
     if (!name || !price) {
@@ -409,7 +409,11 @@ const image = document.getElementById("imagemURL").value;
             body: JSON.stringify(body)
         });
 
-        if (!res.ok) throw new Error("Erro ao salvar");
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || "Erro ao salvar produto");
+        }
+
         productsCache = [];
         ordersCache = [];
         closeModal();
