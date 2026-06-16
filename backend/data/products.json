@@ -1,0 +1,68 @@
+[
+  {
+    "id": "p1",
+    "name": "RTX 4070 Ti Super",
+    "price": 5499.9,
+    "category": "Placas de Vídeo",
+    "stock": 8,
+    "image": "https://images.unsplash.com/photo-1591488320449-011701bb6704?w=500",
+    "description": "Placa gráfica potente para jogos em 4K.",
+    "sales": 18,
+    "badge": "new"
+  },
+  {
+    "id": "p2",
+    "name": "Intel i9-13900K",
+    "price": 3899.9,
+    "category": "Processadores",
+    "stock": 12,
+    "image": "https://images.unsplash.com/photo-1591405351990-4726e331f141?w=500",
+    "description": "Processador de alta performance para workstation.",
+    "sales": 27,
+    "badge": "bestseller"
+  },
+  {
+    "id": "p3",
+    "name": "SSD NVMe 2TB Gen4",
+    "price": 899.9,
+    "category": "Armazenamento",
+    "stock": 25,
+    "image": "https://images.unsplash.com/photo-1544652478-6653e09f18a2?w=500",
+    "description": "Velocidade extrema para seu sistema.",
+    "sales": 35,
+    "badge": "sale"
+  },
+  {
+    "id": "p4",
+    "name": "RAM DDR5 32GB RGB",
+    "price": 1299.9,
+    "category": "Memória",
+    "stock": 15,
+    "image": "https://images.unsplash.com/photo-1562976540-1502c2145186?w=500",
+    "description": "Estabilidade e beleza para seu setup.",
+    "sales": 9,
+    "badge": ""
+  },
+  {
+    "id": "p5",
+    "name": "Fonte 850W Gold Modular",
+    "price": 749.9,
+    "category": "Energia",
+    "stock": 20,
+    "image": "https://images.unsplash.com/photo-1587202395160-244303350328?w=500",
+    "description": "Energia confiável para componentes de ponta.",
+    "sales": 5,
+    "badge": ""
+  },
+  {
+    "id": "p6",
+    "name": "Gabinete Airflow RGB",
+    "price": 499.9,
+    "category": "Gabinetes",
+    "stock": 10,
+    "image": "https://images.unsplash.com/photo-1547082299-de196ea013d6?w=500",
+    "description": "Excelente refrigeração e design moderno.",
+    "sales": 2,
+    "badge": "new"
+  }
+]

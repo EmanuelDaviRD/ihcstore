@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Admin | IHC</title>
+    <link rel="icon" href="https://i.ibb.co/pjCZ7fVv/4893207.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="admin.css">
+    <style>
+        #terminal-loader { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; padding: 2rem; font-family: 'JetBrains Mono', monospace; color: #00d4ff; overflow: hidden; }
+        .terminal-line { margin-bottom: 0.5rem; opacity: 0; transform: translateY(5px); animation: lineFadeIn 0.2s forwards; font-size: 0.9rem; }
+        .terminal-line.success { color: #00ffaa; }
+        @keyframes lineFadeIn { to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+<div class="scanline"></div>
+
+<div id="terminal-loader">
+    <div id="terminal-content"></div>
+</div>
+
+<div id="adminLoginScreen" class="admin-login-screen">
+    <div class="login-bg"></div>
+    <div class="admin-login-box">
+        <div class="login-logo">
+            <i class="fas fa-microchip"></i>
+            <h2>IHC STORE</h2>
+            <p>Painel Administrativo</p>
+        </div>
+        <div class="login-form">
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="adminEmail" placeholder="E-mail admin" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="adminPassword" placeholder="Senha" autocomplete="new-password">
+            </div>
+            <button id="adminLoginBtn" class="btn-glow">
+                <i class="fas fa-lock"></i> Acessar Painel
+            </button>
+        </div>
+        <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Voltar à loja</a>
+    </div>
+</div>
+
+
+<div id="adminApp" class="admin-app" style="display:none;">
+    
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-microchip"></i>
+            <div>
+                <h3>IHC Store</h3>
+                <span>Painel Admin</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-page="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-page="products">
+                <i class="fas fa-box-open"></i>
+                <span>Produtos</span>
+            </a>
+            <a href="#" class="nav-item" data-page="orders">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Pedidos</span>
+            </a>
+            <a href="#" class="nav-item" data-page="customers">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </a>
+            <a href="#" class="nav-item" data-page="layout">
+                <i class="fas fa-paint-brush"></i>
+                <span>Layout</span>
+            </a>
+            <a href="#" class="nav-item" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Configurações</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="admin-user">
+                <i class="fas fa-user-shield"></i>
+                <span id="adminName">Admin</span>
+            </div>
+            <button id="adminLogoutBtn" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
+        </div>
+    </aside>
+
+    
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <h1 id="pageTitle"><i class="fas fa-chart-line"></i> Dashboard</h1>
+            <div class="topbar-actions">
+                <a href="/" target="_blank" class="btn-view-store">
+                    <i class="fas fa-external-link-alt"></i> Ver Loja
+                </a>
+            </div>
+        </header>
+
+        <div class="admin-content" id="adminContent">
+            
+        </div>
+    </main>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>

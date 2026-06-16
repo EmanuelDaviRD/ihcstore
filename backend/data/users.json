@@ -1,0 +1,12 @@
+[
+  {
+    "id": "u-admin",
+    "name": "Admin",
+    "email": "admin@ihcstore.com",
+    "password": "admin123",
+    "role": "admin",
+    "phone": "",
+    "address": "",
+    "createdAt": "2026-05-14T02:23:47.461Z"
+  }
+]
