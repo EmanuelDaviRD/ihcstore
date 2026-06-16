@@ -23,8 +23,11 @@ const SECRET = process.env.JWT_SECRET || 'LOCAL_JWT_SECRET_CHANGE_ME_IN_PRODUCTI
 app.use(cors());
 app.use(express.json());
 
+// 🛠️ CORREÇÃO AQUI: Só tenta criar a pasta uploads localmente. A Vercel ignora e não quebra.
 const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+if (!process.env.VERCEL && !fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
