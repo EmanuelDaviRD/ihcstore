@@ -6,7 +6,7 @@ const MONGO_URI = process.env.MONGODB_URI;
 
 // --- SCHEMAS ---
 const productSchema = new mongoose.Schema({
-  _id: String,
+  _id: mongoose.Schema.Types.Mixed, // Permite tanto String quanto ObjectId
   name: { type: String, required: true },
   price: { type: Number, required: true },
   category: { type: String, required: true },
@@ -86,9 +86,21 @@ async function seedInitialData() {
 const formatDoc = (doc) => {
   if (!doc) return null;
   const obj = doc.toObject ? doc.toObject() : doc;
-  obj.id = obj._id;
+  obj.id = obj._id ? obj._id.toString() : null; // Garante que o ID seja sempre uma string no frontend
   return obj;
 };
+
+/**
+ * Função auxiliar para buscar produto de forma flexível (String ou ObjectId)
+ */
+async function findProductFlexible(id) {
+  let product = await Product.findById(id);
+  // Se não achar e o ID parecer um ObjectId válido do MongoDB, tenta converter e buscar novamente
+  if (!product && mongoose.Types.ObjectId.isValid(id)) {
+    product = await Product.findOne({ _id: new mongoose.Types.ObjectId(id) });
+  }
+  return product;
+}
 
 module.exports = {
   initializeDatabase,
@@ -96,8 +108,11 @@ module.exports = {
     const filter = showAll ? {} : { active: { $ne: false } };
     return (await Product.find(filter).sort({ sales: -1 })).map(formatDoc);
   },
-  getProductById: async (id) => formatDoc(await Product.findById(id)),
-  upsertProduct: async (id, data) => formatDoc(await Product.findByIdAndUpdate(id, { $set: data }, { upsert: true, new: true })),
+  getProductById: async (id) => formatDoc(await findProductFlexible(id)),
+  upsertProduct: async (id, data) => {
+    const targetId = mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id;
+    return formatDoc(await Product.findByIdAndUpdate(targetId, { $set: data }, { upsert: true, new: true }));
+  },
   deleteProduct: async (id) => (await Product.findByIdAndDelete(id)) !== null,
   listUsers: async () => (await User.find({}, '-password')).map(formatDoc),
   findUserByEmail: async (email) => formatDoc(await User.findOne({ email })),

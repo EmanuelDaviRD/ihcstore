@@ -284,8 +284,9 @@ async function loadProductsPage() {
                         ${productsCache.map(p => `
                             <tr>
                                 <td style="text-align:center">
+                                    <!-- p.id agora é garantido como string pelo formatDoc -->
                                     <label class="switch-toggle" title="${p.active !== false ? 'Ativado' : 'Desativado'}">
-                                        <input type="checkbox" ${p.active !== false ? 'checked' : ''} onchange="toggleProductActive('${p._id || p.id}', ${p.active !== false})">
+                                        <input type="checkbox" ${p.active !== false ? 'checked' : ''} onchange="toggleProductActive('${p.id || p._id}', ${p.active !== false})">
                                         <span class="slider-toggle"></span>
                                     </label>
                                 </td>
@@ -325,7 +326,7 @@ async function toggleProductActive(id, currentStatus) {
         }
         
         // Atualiza cache local para refletir a mudança imediatamente
-        const prod = productsCache.find(p => (p._id || p.id) == id);
+        const prod = productsCache.find(p => (p.id || p._id) == id);
         if (prod) prod.active = !currentStatus;
 
         playTerminalBeep();
