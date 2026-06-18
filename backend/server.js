@@ -88,7 +88,8 @@ app.get('/admin', (req, res) => res.sendFile(path.join(frontendDir, 'admin.html'
 
 app.get('/produtos', async (req, res) => {
   try {
-    res.json(await listProducts());
+    const showAll = req.query.all === 'true';
+    res.json(await listProducts(showAll));
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -96,11 +97,12 @@ app.get('/produtos', async (req, res) => {
 
 app.post('/produtos', authenticate, isAdmin, async (req, res) => {
   try {
-    const { name, price, category, stock, image, description, badge } = req.body;
+    const { name, price, category, stock, image, description, badge, active } = req.body;
     if (!name || price === undefined || !category) return res.status(400).json({ error: 'Nome, preço e categoria são obrigatórios' });
 
     const id = 'p-' + Date.now();
     await upsertProduct(id, {
+      active: active !== undefined ? active : true,
       name,
       price,
       category,
@@ -119,7 +121,7 @@ app.post('/produtos', authenticate, isAdmin, async (req, res) => {
 
 app.put('/produtos/:id', authenticate, isAdmin, async (req, res) => {
   try {
-    const fields = ['name', 'price', 'category', 'stock', 'image', 'description', 'badge'];
+    const fields = ['name', 'price', 'category', 'stock', 'image', 'description', 'badge', 'active'];
     const body = {};
     fields.forEach(f => {
       if (req.body[f] !== undefined) body[f] = req.body[f];

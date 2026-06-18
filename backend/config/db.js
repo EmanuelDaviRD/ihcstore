@@ -14,7 +14,8 @@ const productSchema = new mongoose.Schema({
   image: String,
   description: String,
   sales: { type: Number, default: 0 },
-  badge: { type: String, default: '' }
+  badge: { type: String, default: '' },
+  active: { type: Boolean, default: true }
 }, { timestamps: true });
 
 const userSchema = new mongoose.Schema({
@@ -91,7 +92,10 @@ const formatDoc = (doc) => {
 
 module.exports = {
   initializeDatabase,
-  listProducts: async () => (await Product.find().sort({ sales: -1 })).map(formatDoc),
+  listProducts: async (showAll = false) => {
+    const filter = showAll ? {} : { active: { $ne: false } };
+    return (await Product.find(filter).sort({ sales: -1 })).map(formatDoc);
+  },
   getProductById: async (id) => formatDoc(await Product.findById(id)),
   upsertProduct: async (id, data) => formatDoc(await Product.findByIdAndUpdate(id, { $set: data }, { upsert: true, new: true })),
   deleteProduct: async (id) => (await Product.findByIdAndDelete(id)) !== null,

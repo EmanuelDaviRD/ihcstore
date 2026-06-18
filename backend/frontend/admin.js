@@ -168,9 +168,8 @@ async function fetchWithAuth(url, options = {}) {
 
 async function loadDashboard() {
     try {
-
         const [productsRes, ordersRes, usersRes] = await Promise.all([
-            fetch(`${API_URL}/produtos`),
+            fetch(`${API_URL}/produtos?all=true`),
             fetchWithAuth(`${API_URL}/pedidos`),
             fetchWithAuth(`${API_URL}/usuarios`)
         ]);
@@ -266,11 +265,9 @@ function renderSalesChart() {
 
 async function loadProductsPage() {
     try {
-        if (productsCache.length === 0) {
-            const res = await fetch(`${API_URL}/produtos`);
-            if (!res.ok) throw new Error(`Status ${res.status}`);
-            productsCache = await res.json();
-        }
+        const res = await fetch(`${API_URL}/produtos?all=true`);
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        productsCache = await res.json();
 
         const content = document.getElementById("adminContent");
         content.innerHTML = `
@@ -281,11 +278,16 @@ async function loadProductsPage() {
                 </div>
                 <table class="data-table">
                     <thead>
-                        <tr><th>Foto</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Vendas</th><th>Ações</th></tr>
+                        <tr><th>Status</th><th>Foto</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Vendas</th><th>Ações</th></tr>
                     </thead>
                     <tbody>
                         ${productsCache.map(p => `
                             <tr>
+                                <td style="text-align:center">
+                                    <button class="btn btn-sm" onclick="toggleProductActive('${p._id || p.id}', ${p.active !== false})" title="${p.active !== false ? 'Ocultar da Loja' : 'Mostrar na Loja'}">
+                                        <i class="fas ${p.active !== false ? 'fa-eye' : 'fa-eye-slash'}" style="color: ${p.active !== false ? 'var(--primary)' : '#666'}"></i>
+                                    </button>
+                                </td>
                                 <td><img src="${p.image}" alt="${p.name}"></td>
                                 <td><strong>${p.name}</strong></td>
                                 <td>${p.category}</td>
@@ -305,6 +307,28 @@ async function loadProductsPage() {
     } catch (err) {
 
         document.getElementById("adminContent").innerHTML = `<div class="section-card"><h3 style="color:#ff4d4d">Erro ao carregar produtos</h3><p>${err.message}</p></div>`;
+    }
+}
+
+async function toggleProductActive(id, currentStatus) {
+    try {
+        const res = await fetchWithAuth(`${API_URL}/produtos/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ active: !currentStatus })
+        });
+
+        if (!res.ok) throw new Error("Erro ao atualizar status");
+        
+        // Atualiza cache local para refletir a mudança imediatamente
+        const prod = productsCache.find(p => (p._id || p.id) == id);
+        if (prod) prod.active = !currentStatus;
+
+        playTerminalBeep();
+        loadProductsPage();
+        
+    } catch (err) {
+        Swal.fire("Erro", err.message, "error");
     }
 }
 
