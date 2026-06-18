@@ -284,9 +284,10 @@ async function loadProductsPage() {
                         ${productsCache.map(p => `
                             <tr>
                                 <td style="text-align:center">
-                                    <button class="btn btn-sm" onclick="toggleProductActive('${p._id || p.id}', ${p.active !== false})" title="${p.active !== false ? 'Ocultar da Loja' : 'Mostrar na Loja'}">
-                                        <i class="fas ${p.active !== false ? 'fa-eye' : 'fa-eye-slash'}" style="color: ${p.active !== false ? 'var(--primary)' : '#666'}"></i>
-                                    </button>
+                                    <label class="switch-toggle" title="${p.active !== false ? 'Ativado' : 'Desativado'}">
+                                        <input type="checkbox" ${p.active !== false ? 'checked' : ''} onchange="toggleProductActive('${p._id || p.id}', ${p.active !== false})">
+                                        <span class="slider-toggle"></span>
+                                    </label>
                                 </td>
                                 <td><img src="${p.image}" alt="${p.name}"></td>
                                 <td><strong>${p.name}</strong></td>
@@ -318,14 +319,25 @@ async function toggleProductActive(id, currentStatus) {
             body: JSON.stringify({ active: !currentStatus })
         });
 
-        if (!res.ok) throw new Error("Erro ao atualizar status");
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || "Erro na comunicação com o servidor");
+        }
         
         // Atualiza cache local para refletir a mudança imediatamente
         const prod = productsCache.find(p => (p._id || p.id) == id);
         if (prod) prod.active = !currentStatus;
 
         playTerminalBeep();
-        loadProductsPage();
+        
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: !currentStatus ? 'Produto Ativado' : 'Produto Ocultado',
+            showConfirmButton: false,
+            timer: 2000
+        });
         
     } catch (err) {
         Swal.fire("Erro", err.message, "error");
