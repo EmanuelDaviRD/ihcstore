@@ -3,14 +3,14 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const axios = require('axios');
 require('dotenv').config();
 
 const { uploadToCloudinary } = require('./config/cloudinary');
 const {
-  db, initializeDatabase, listProducts, getProductById, upsertProduct, deleteProduct,
+  initializeDatabase, listProducts, getProductById, upsertProduct, deleteProduct,
   listUsers, findUserByEmail, createUser, updateAdminPassword, verifyAdminPassword,
   listOrders, listOrdersByCustomer, getOrderById, createOrder, deleteOrdersBulk,
   updateOrderStatus, getSettings, saveSettings
@@ -18,7 +18,26 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SECRET = process.env.JWT_SECRET || 'LOCAL_JWT_SECRET_CHANGE_ME_IN_PRODUCTION';
+const SECRET = process.env.JWT_SECRET;
+
+if (!SECRET) {
+  console.warn("⚠️ JWT_SECRET não detectado. Autenticação poderá falhar.");
+}
+
+// Middleware para garantir conexão com DB na Vercel (Movido para o topo)
+let isConnected = false;
+app.use(async (req, res, next) => {
+  if (!isConnected) {
+    try {
+      await initializeDatabase();
+      isConnected = true;
+    } catch (err) {
+      console.error("Critical DB Init Error:", err);
+      return res.status(500).json({ error: "Database initialization failed" });
+    }
+  }
+  next();
+});
 
 app.use(cors());
 app.use(express.json());
@@ -32,7 +51,11 @@ if (!process.env.VERCEL && !fs.existsSync(uploadsDir)) {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads')),
+  destination: (req, file, cb) => {
+    // Na Vercel, usamos /tmp para armazenamento temporário antes de enviar ao Cloudinary
+    const dest = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'uploads');
+    cb(null, dest);
+  },
   filename: (req, file, cb) => {
     const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, unique + path.extname(file.originalname));
@@ -58,9 +81,10 @@ function isAdmin(req, res, next) {
   next();
 }
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'landing.html')));
-app.get('/loja', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'index.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'admin.html')));
+const frontendDir = path.join(__dirname, 'frontend');
+app.get('/', (req, res) => res.sendFile(path.join(frontendDir, 'landing.html')));
+app.get('/loja', (req, res) => res.sendFile(path.join(frontendDir, 'index.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(frontendDir, 'admin.html')));
 
 app.get('/produtos', async (req, res) => {
   try {
@@ -329,43 +353,32 @@ app.post('/settings', authenticate, isAdmin, async (req, res) => {
   }
 });
 
-app.use(express.static(path.join(__dirname, 'frontend'), { fallthrough: true }));
-app.use('/uploads', (req, res) => res.status(404).json({ error: 'Arquivo não encontrado' }));
+app.use(express.static(frontendDir));
 
 // 404 para rotas não encontradas (API ou frontend)
 app.use((req, res) => {
-  if (req.path.startsWith('/produtos') || req.path.startsWith('/pedidos') || req.path.startsWith('/usuarios') || req.path.startsWith('/settings') || req.path.startsWith('/login') || req.path.startsWith('/register')) {
-    return res.status(404).json({ error: 'Rota de API não encontrada' });
+  if (req.path.startsWith('/produtos') || req.path.startsWith('/pedidos') || req.path.startsWith('/usuarios') || req.path.startsWith('/settings') || req.path.startsWith('/login') || req.path.startsWith('/register') || req.path.startsWith('/admin-check')) {
+    return res.status(404).json({ error: "Rota de API não encontrada" });
   }
-  res.status(404).sendFile(path.join(__dirname, 'frontend', 'index.html'));
+  
+  const indexPath = path.join(frontendDir, 'index.html');
+  if (fs.existsSync(indexPath)) return res.sendFile(indexPath);
+  res.status(404).send("Erro: Frontend não encontrado no servidor.");
 });
 
 const start = async () => {
   try {
-    await initializeDatabase();
-    
-    const adminEmail = 'admin@ihcstore.com';
-    const admin = await findUserByEmail(adminEmail);
-    
-    if (!admin) {
-      console.log('⚙️ Criando usuário administrador padrão...');
-      const hashed = await bcrypt.hash('admin123', 10);
-      await createUser({
-        id: 'u-admin',
-        name: 'Administrador',
-        email: adminEmail,
-        password: hashed,
-        role: 'admin'
+    // Só inicia o servidor se não estivermos no ambiente da Vercel
+    if (!process.env.VERCEL) {
+      app.listen(PORT, () => {
+        console.log(`\n🚀 SITE NO AR: http://localhost:${PORT}\n`);
       });
     }
-
-    app.listen(PORT, () => {
-      console.log(`\n🚀 SITE NO AR: http://localhost:${PORT}`);
-      console.log(`🔐 ADMIN: ${adminEmail} / admin123\n`);
-    });
   } catch (err) {
     console.error('❌ Erro crítico ao iniciar o site:', err);
   }
 };
 
 start();
+
+module.exports = app;

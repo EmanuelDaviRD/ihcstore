@@ -2,18 +2,15 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/server.js",
-      "use": "@vercel/node"
+      "src": "index.js",
+      "use": "@vercel/node",
+      "config": { "includeFiles": ["backend/frontend/**", "backend/data/**"] }
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/uploads/(.*)",
-      "dest": "backend/uploads/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "backend/server.js"
+      "source": "/(.*)",
+      "destination": "/index.js"
     }
   ]
 }
