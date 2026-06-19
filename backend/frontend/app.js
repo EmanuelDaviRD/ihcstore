@@ -4,9 +4,20 @@ let AppState = {
     products: [], cart: [], favorites: [],
     coupons: [{ code: "BEMVINDO10", discount: 0.10 }, { code: "VIP20", discount: 0.20 }],
     appliedCoupon: null, currentUser: null, token: null,
-    activeCategory: "all", searchTerm: "", sortType: "", minPrice: 0, maxPrice: 50000,
-    filtersOpen: false, productsLoaded: false
+    activeCategories: ["all"], searchTerm: "", sortType: "", minPrice: 0, maxPrice: 50000,
+    filtersOpen: false, productsLoaded: false,
+    get activeCategory() {
+        return this.activeCategories.includes("all") ? "all" : (this.activeCategories[0] || "all");
+    },
+    set activeCategory(val) {
+        if (Array.isArray(val)) {
+            this.activeCategories = val;
+        } else {
+            this.activeCategories = [val];
+        }
+    }
 };
+window.AppState = AppState;
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -111,7 +122,7 @@ function renderCatalog() {
         const price = p.price || 0;
         const search = (AppState.searchTerm || "").toLowerCase();
 
-        const cat = AppState.activeCategory === "all" || category === AppState.activeCategory;
+        const cat = AppState.activeCategories.includes("all") || AppState.activeCategories.includes(category);
         const pr = price >= AppState.minPrice && price <= AppState.maxPrice;
         const sr = name.includes(search);
         return cat && pr && sr;
@@ -170,7 +181,7 @@ function renderCatalog() {
 }
 
 window.resetFilters = function() {
-    AppState.activeCategory = "all";
+    AppState.activeCategories = ["all"];
     AppState.minPrice = 0;
     AppState.maxPrice = 50000;
     AppState.searchTerm = "";
@@ -196,15 +207,30 @@ function renderFilterModalUI() {
 
     const container = document.getElementById("modalCategories");
     if (container) {
-        container.innerHTML = cats.map(c => `
-            <button class="cat-filter-btn ${AppState.activeCategory === c.id ? 'active' : ''}" 
-                    onclick="selectCategory('${c.id}')">${c.label}</button>
-        `).join('');
+        container.innerHTML = cats.map(c => {
+            const isActive = AppState.activeCategories.includes(c.id);
+            return `
+                <button class="cat-filter-btn ${isActive ? 'active' : ''}" 
+                        onclick="selectCategory('${c.id}')">${c.label}</button>
+            `;
+        }).join('');
     }
 }
 
 window.selectCategory = function(cat) {
-    AppState.activeCategory = cat;
+    if (cat === 'all') {
+        AppState.activeCategories = ['all'];
+    } else {
+        AppState.activeCategories = AppState.activeCategories.filter(c => c !== 'all');
+        if (AppState.activeCategories.includes(cat)) {
+            AppState.activeCategories = AppState.activeCategories.filter(c => c !== cat);
+        } else {
+            AppState.activeCategories.push(cat);
+        }
+        if (AppState.activeCategories.length === 0) {
+            AppState.activeCategories = ['all'];
+        }
+    }
     renderCatalog();
 };
 

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Multi-Selection Category Filters - Test Suite</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-case {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .test-case.pass {
+            border-left: 5px solid #2ea44f;
+        }
+        .test-case.fail {
+            border-left: 5px solid #f85149;
+            background-color: rgba(248, 81, 73, 0.1);
+        }
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .badge.pass {
+            background-color: #2ea44f;
+            color: white;
+        }
+        .badge.fail {
+            background-color: #f85149;
+            color: white;
+        }
+        h1 {
+            color: #58a6ff;
+        }
+        #testResultsSummary {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+        .summary-pass {
+            background-color: rgba(46, 164, 79, 0.2);
+            border: 1px solid #2ea44f;
+            color: #56d364;
+        }
+        .summary-fail {
+            background-color: rgba(248, 81, 73, 0.2);
+            border: 1px solid #f85149;
+            color: #ff7b72;
+        }
+        /* Hide app visuals during test or show it in a small container */
+        #testSandbox {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IHC Store - Category Filter Validation Suite</h1>
+        <div id="testResultsSummary" class="summary-pass">Aguardando execução dos testes...</div>
+        <div id="testCasesContainer"></div>
+    </div>
+
+    <!-- Sandbox DOM matching index.html so app.js doesn't crash -->
+    <div id="testSandbox">
+        <div id="app"></div>
+        <div id="modalCategories"></div>
+        <input type="number" id="minPModal">
+        <input type="number" id="maxPModal">
+        <select id="sortSModal">
+            <option value=""></option>
+            <option value="price_asc"></option>
+            <option value="price_desc"></option>
+            <option value="sales"></option>
+        </select>
+        <input type="text" id="globalSearch">
+        <div class="cart-count-badge">0</div>
+        <div class="fav-count-badge">0</div>
+    </div>
+
+    <script>
+        // Mock fetch API
+        const mockProducts = [
+            { id: "p1", name: "Memória HyperX 8GB", category: "Memória", price: 250, sales: 5, stock: 10, image: "" },
+            { id: "p2", name: "SSD Kingston 480GB", category: "Armazenamento", price: 300, sales: 12, stock: 5, image: "" },
+            { id: "p3", name: "Ryzen 5 5600G", category: "Processadores", price: 800, sales: 25, stock: 15, image: "" },
+            { id: "p4", name: "RTX 3060 Ti", category: "Placas de Vídeo", price: 2200, sales: 8, stock: 3, image: "" }
+        ];
+
+        window.fetch = async (url, options) => {
+            if (url.endsWith('/produtos')) {
+                return {
+                    ok: true,
+                    json: async () => mockProducts
+                };
+            }
+            if (url.endsWith('/settings')) {
+                return {
+                    ok: true,
+                    json: async () => ({ primaryColor: "#00d4ff", accentColor: "#C9A96E", siteTitle: "IHC Store" })
+                };
+            }
+            return { ok: false, status: 404 };
+        };
+
+        // Mock Swal
+        window.Swal = {
+            fire: () => {}
+        };
+    </script>
+    
+    <!-- Load the script to be tested -->
+    <script src="app.js"></script>
+
+    <script>
+        // Simple assertion utility
+        const testCases = [];
+        function assert(condition, message) {
+            testCases.push({ passed: !!condition, message });
+        }
+
+        // Wait until products are loaded and catalog is rendered
+        window.addEventListener("load", async () => {
+            // Let any initial promises resolve
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            try {
+                // Test 1: Initial state
+                assert(
+                    window.AppState.activeCategories.includes('all') && window.AppState.activeCategories.length === 1,
+                    "Estado inicial deve ter apenas a categoria 'all' selecionada."
+                );
+
+                // Verify that all 4 products are rendered initially (as "all" is active)
+                const gridInitial = document.getElementById("productsGrid");
+                const initialProductCount = gridInitial ? gridInitial.querySelectorAll(".product-card").length : 0;
+                assert(
+                    initialProductCount === 4,
+                    `Listagem inicial deve exibir todos os 4 produtos (exibidos: ${initialProductCount}).`
+                );
+
+                // Test 2: Selecting a category deselects "Todos"
+                window.selectCategory('Memória');
+                assert(
+                    window.AppState.activeCategories.includes('Memória') && !window.AppState.activeCategories.includes('all'),
+                    "Selecionar 'Memória' deve desmarcar 'Todos' e conter apenas 'Memória'."
+                );
+
+                const gridOneCat = document.getElementById("productsGrid");
+                const oneCatProductCount = gridOneCat ? gridOneCat.querySelectorAll(".product-card").length : 0;
+                assert(
+                    oneCatProductCount === 1,
+                    `Listagem após selecionar 'Memória' deve conter apenas 1 produto (exibidos: ${oneCatProductCount}).`
+                );
+
+                // Test 3: Selecting multiple categories simultaneously
+                window.selectCategory('Armazenamento');
+                assert(
+                    window.AppState.activeCategories.includes('Memória') && 
+                    window.AppState.activeCategories.includes('Armazenamento') && 
+                    window.AppState.activeCategories.length === 2,
+                    "Selecionar 'Armazenamento' deve manter 'Memória' e ter ambas selecionadas."
+                );
+
+                const gridMultiCat = document.getElementById("productsGrid");
+                const multiCatProductCount = gridMultiCat ? gridMultiCat.querySelectorAll(".product-card").length : 0;
+                assert(
+                    multiCatProductCount === 2,
+                    `Listagem de múltiplos filtros deve mostrar a união (OR): 2 produtos (exibidos: ${multiCatProductCount}).`
+                );
+
+                // Test 4: Deselecting a category that is part of a multi-selection
+                window.selectCategory('Memória'); // click 'Memória' again to deselect
+                assert(
+                    !window.AppState.activeCategories.includes('Memória') && 
+                    window.AppState.activeCategories.includes('Armazenamento') && 
+                    window.AppState.activeCategories.length === 1,
+                    "Desmarcar 'Memória' deve removê-la da seleção, mantendo 'Armazenamento'."
+                );
+
+                const gridAfterDeselect = document.getElementById("productsGrid");
+                const afterDeselectCount = gridAfterDeselect ? gridAfterDeselect.querySelectorAll(".product-card").length : 0;
+                assert(
+                    afterDeselectCount === 1,
+                    `Listagem após desmarcar 'Memória' deve exibir apenas 1 produto de 'Armazenamento' (exibidos: ${afterDeselectCount}).`
+                );
+
+                // Test 5: Deselecting the last active category reverts to "Todos"
+                window.selectCategory('Armazenamento'); // deselect last active category
+                assert(
+                    window.AppState.activeCategories.includes('all') && window.AppState.activeCategories.length === 1,
+                    "Desmarcar a última categoria ativa deve reverter automaticamente para 'Todos'."
+                );
+
+                const gridAllReverted = document.getElementById("productsGrid");
+                const allRevertedCount = gridAllReverted ? gridAllReverted.querySelectorAll(".product-card").length : 0;
+                assert(
+                    allRevertedCount === 4,
+                    `Listagem após reverter para 'Todos' deve mostrar todos os 4 produtos (exibidos: ${allRevertedCount}).`
+                );
+
+                // Test 6: Selecting "Todos" when other categories are active clears all others
+                window.selectCategory('Processadores');
+                window.selectCategory('Placas de Vídeo');
+                assert(
+                    window.AppState.activeCategories.includes('Processadores') && 
+                    window.AppState.activeCategories.includes('Placas de Vídeo') && 
+                    !window.AppState.activeCategories.includes('all'),
+                    "Selecionar 'Processadores' e 'Placas de Vídeo' deve ativá-las."
+                );
+
+                window.selectCategory('all');
+                assert(
+                    window.AppState.activeCategories.includes('all') && window.AppState.activeCategories.length === 1,
+                    "Selecionar 'Todos' deve limpar todas as outras categorias ativas."
+                );
+
+                const gridFinalAll = document.getElementById("productsGrid");
+                const finalAllCount = gridFinalAll ? gridFinalAll.querySelectorAll(".product-card").length : 0;
+                assert(
+                    finalAllCount === 4,
+                    `Listagem após selecionar 'Todos' novamente deve exibir todos os 4 produtos (exibidos: ${finalAllCount}).`
+                );
+
+            } catch (err) {
+                assert(false, "Erro de execução durante os testes: " + err.message);
+            }
+
+            // Render test cases to DOM
+            const container = document.getElementById("testCasesContainer");
+            let allPassed = true;
+            let passedCount = 0;
+            
+            testCases.forEach((tc, idx) => {
+                const tcDiv = document.createElement("div");
+                tcDiv.className = `test-case ${tc.passed ? 'pass' : 'fail'}`;
+                tcDiv.innerHTML = `
+                    <h3>Caso #${idx + 1} <span class="badge ${tc.passed ? 'pass' : 'fail'}">${tc.passed ? 'PASSED' : 'FAILED'}</span></h3>
+                    <p>${tc.message}</p>
+                `;
+                container.appendChild(tcDiv);
+                if (tc.passed) passedCount++;
+                else allPassed = false;
+            });
+
+            // Update summary banner
+            const summaryBanner = document.getElementById("testResultsSummary");
+            if (allPassed) {
+                summaryBanner.className = "summary-pass";
+                summaryBanner.innerText = `Sucesso! Todos os ${testCases.length} casos de teste passaram.`;
+            } else {
+                summaryBanner.className = "summary-fail";
+                summaryBanner.innerText = `Falha! Apenas ${passedCount} de ${testCases.length} testes passaram.`;
+            }
+        });
+    </script>
+</body>
+</html>
